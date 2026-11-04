@@ -2658,8 +2658,10 @@ const M4_QUIZ = {
     exp:"Une entreprise assujettie déduit la TVA payée sur ses achats (4110). Pour elle, la vraie dépense est le montant hors TVA : c'est ce que l'assureur indemnise, moins la franchise prévue au contrat." },
   t3:{ q:"Tu accordes 10 % de remise sur un article vendu 100 € HT, qui t'a coûté 60 € HT. Ta marge diminue de…", opts:["10 % : de 40 € à 36 €","25 % : de 40 € à 30 €, car toute la remise sort de la marge","Rien : c'est le client qui paie moins, pas toi"], ok:1,
     exp:"Prix net : 90 € ; marge : 90 − 60 = 30 € au lieu de 40 €. La remise de 10 € sort entièrement de ta marge : elle fond de 25 %. Le taux de marque passe de 40 % (40 ÷ 100) à 33 % (30 ÷ 90)." },
-  t4:{ q:"Ton client n'a toujours pas payé sa facture. Dois-tu quand même verser à l'État la TVA de cette facture ?", opts:["Non, seulement quand le client aura payé","Oui : la TVA est due pour la période de la facture, même si le client n'a pas encore payé","Non : l'État la réclame directement au client"], ok:0,
-    exp:"La TVA d'une vente est due à l'État pour le trimestre où la facture est émise : tu l'as versée le 25 octobre avec ta déclaration du troisième trimestre, alors que le client ne t'avait rien payé. Une facture impayée pèse deux fois sur la trésorerie." },
+  // V4.4 (03/11/2026, remarque du professeur) : la clé était fausse (ok:0, « Non ») ; on verse toujours la TVA, et on la récupère si la perte est prouvée.
+  // Les indices 0 à 2 gardent leur sens (parties déjà jouées : voir restaurer()) ; la 4e réponse est nouvelle.
+  t4:{ q:"Ton client n'a toujours pas payé sa facture. Dois-tu quand même verser à l'État la TVA de cette facture ?", opts:["Non, seulement quand le client aura payé","Oui : elle est due pour la période de la facture, même si le client n'a pas encore payé ; s'il ne paie jamais (perte prouvée), tu la récupéreras","Non : l'État la réclame directement au client","Oui, et cette TVA est perdue pour de bon si le client ne paie jamais"], ok:1,
+    exp:"La TVA d'une vente est due à l'État pour la période où la facture est émise, que le client ait payé ou non : tu la verses le 25 octobre avec ta déclaration du troisième trimestre, même si ce client ne t'a encore rien payé. Une facture impayée pèse donc deux fois sur ta trésorerie. Mais cette TVA n'est pas perdue : si le client ne paie jamais et que la perte est prouvée (faillite, procès-verbal de carence de l'huissier…), tu la récupères dans une déclaration TVA suivante, en général avec une note de crédit au client. S'il finit par payer, il n'y a rien à récupérer : tu as seulement avancé la TVA." },
   bilan:{ q:"Il te reste des articles invendus au 31 décembre. Pour 2027, ce stock est…", opts:["Une charge de 2027 : on l'a payé","Un actif au bilan (3400), à son prix d'achat : il sera vendu en 2028 et ne compte pas dans les charges de 2027","Perdu : il faut le jeter"], ok:1,
     exp:"Le coût des ventes ne retient que ce qui est sorti du stock : stock au 1er janvier + achats − stock au 31 décembre. Ce qui reste en rayon est à l'actif ; mais c'est de l'argent immobilisé tant qu'il n'est pas vendu." }
 };
@@ -3498,6 +3500,8 @@ function restaurer(etat){
   ["exoStock", "exoTreso", "exoInteret", "grosse", "finance"].forEach(k => { s[k] = Object.assign(fresh()[k], s[k] || {}); });
   if (!Array.isArray(s.qtes) || s.qtes.length !== 4) s.qtes = fresh().qtes; if (!Array.isArray(s.commandes) || s.commandes.length !== 4) s.commandes = fresh().commandes;
   s.quiz = s.quiz || {}; s.done = s.done || {}; s.mots = s.mots || [];
+  // V4.4 (03/11/2026) : défi « t4 » répondu avec l'ancienne clé fausse : la réussite se recalcule d'après la réponse, et les 50 XP suivent
+  const t4 = s.quiz.t4; if (t4 && t4.ok !== (t4.rep === M4_QUIZ.t4.ok)){ t4.ok = !t4.ok; s.xp = Math.max(0, (+s.xp || 0) + (t4.ok ? 50 : -50)); }
   return s;
 }
 
